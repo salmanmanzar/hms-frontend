@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiRequest } from '@/lib/api';
+import PatientNavbar from '@/components/dashboard/PatientNavbar';
+import PatientSidebar from '@/components/dashboard/PatientSidebar';
+import PatientDashboardView from '@/components/dashboard/PatientDashboardView';
+import PatientBillingView from '@/components/dashboard/PatientBillingView';
+import PatientSettingsView from '@/components/dashboard/PatientSettingsView';
+import ProfileCompletionCard from '@/components/dashboard/ProfileCompletionCard';
+import { Loader2 } from 'lucide-react';
 
 interface Doctor {
   id: string;
@@ -12,11 +19,23 @@ interface Doctor {
   department: { name: string };
 }
 
+interface PatientProfile {
+  id: string;
+  dob: string;
+  gender: string;
+  bloodGroup?: string;
+  address?: string;
+  user: { name: string; email: string };
+}
+
 export default function DashboardPage() {
+  const [patientProfile, setPatientProfile] = useState<PatientProfile | null>(null);
   const router = useRouter();
   const [profileChecked, setProfileChecked] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
 
+  // Patient details / Profile form state
+  const [patientName, setPatientName] = useState('Patient');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('male');
   const [bloodGroup, setBloodGroup] = useState('');
@@ -24,10 +43,19 @@ export default function DashboardPage() {
   const [profileError, setProfileError] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
 
+  // Doctors & Search state
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Dynamic Patient History Data
+  const [historyAppointments, setHistoryAppointments] = useState<any[]>([]);
+  const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
+
+  // UI state
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -35,6 +63,17 @@ export default function DashboardPage() {
       router.push('/login');
       return;
     }
+
+    try {
+      const payloadBase64 = token.split('.')[1];
+      if (payloadBase64) {
+        const decoded = JSON.parse(atob(payloadBase64));
+        if (decoded?.name) setPatientName(decoded.name);
+      }
+    } catch (e) {
+      // Ignore token parse error
+    }
+
     checkProfile();
   }, []);
 
@@ -43,7 +82,10 @@ export default function DashboardPage() {
       const profile = await apiRequest('/patient/me/profile');
       if (profile) {
         setHasProfile(true);
+        setPatientProfile(profile);
+        if (profile.user?.name) setPatientName(profile.user.name);
         fetchDoctors('');
+        fetchPatientHistory();
       } else {
         setHasProfile(false);
       }
@@ -51,6 +93,18 @@ export default function DashboardPage() {
       setHasProfile(false);
     } finally {
       setProfileChecked(true);
+    }
+  };
+
+  const fetchPatientHistory = async () => {
+    try {
+      const history = await apiRequest('/patient/me/history');
+      if (history) {
+        setHistoryAppointments(history.appointments || []);
+        setMedicalRecords(history.medicalRecords || []);
+      }
+    } catch (err) {
+      // Fail silently if history cannot be loaded yet
     }
   };
 
@@ -67,6 +121,7 @@ export default function DashboardPage() {
 
       setHasProfile(true);
       fetchDoctors('');
+      fetchPatientHistory();
     } catch (err: any) {
       setProfileError(err.message || 'Failed to save profile');
     } finally {
@@ -88,7 +143,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchDoctors(search);
   };
@@ -103,148 +158,95 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
+  // Initial Auth / Profile check loading state
   if (!profileChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-600 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+        <p className="text-xs font-semibold tracking-wide">Loading Patient Portal...</p>
       </div>
     );
   }
 
+  // Profile completion step if hasProfile is false
   if (!hasProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <h1 className="text-2xl font-bold mb-2 text-center text-gray-900">
-            Complete Your Profile
-          </h1>
-          <p className="text-sm text-gray-600 mb-6 text-center">
-            Please provide your details to continue.
-          </p>
-
-          {profileError && (
-            <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
-              {profileError}
-            </div>
-          )}
-
-          <form onSubmit={handleProfileSubmit}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                value={dob}
-                onChange={(e) => setDob(e.target.value)}
-                required
-                className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Gender
-              </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Blood Group (optional)
-              </label>
-              <input
-                type="text"
-                value={bloodGroup}
-                onChange={(e) => setBloodGroup(e.target.value)}
-                placeholder="e.g. O+"
-                className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white"
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Address (optional)
-              </label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={profileLoading}
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {profileLoading ? 'Saving...' : 'Save Profile'}
-            </button>
-          </form>
-        </div>
+      <div className="min-h-screen bg-slate-50 font-sans">
+        <PatientNavbar
+          patientName={patientName}
+          searchQuery={search}
+          onSearchChange={setSearch}
+          onSearchSubmit={handleSearchSubmit}
+          onLogout={handleLogout}
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+        />
+        <ProfileCompletionCard
+          dob={dob}
+          setDob={setDob}
+          gender={gender}
+          setGender={setGender}
+          bloodGroup={bloodGroup}
+          setBloodGroup={setBloodGroup}
+          address={address}
+          setAddress={setAddress}
+          profileError={profileError}
+          setProfileError={setProfileError}
+          profileLoading={profileLoading}
+          onProfileSubmit={handleProfileSubmit}
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Find a Doctor</h1>
-          <button onClick={handleLogout} className="text-sm text-red-600 hover:underline">
-            Logout
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-teal-500 selection:text-white">
+      {/* Fixed Top Navbar */}
+      <PatientNavbar
+        patientName={patientName}
+        searchQuery={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearchSubmit}
+        onLogout={handleLogout}
+        isMobileSidebarOpen={isMobileSidebarOpen}
+        setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+      />
 
-        <form onSubmit={handleSearch} className="mb-6 flex gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or specialization..."
-            className="flex-1 border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white"
-          />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Search
-          </button>
-        </form>
+      {/* Left Sidebar */}
+      <PatientSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileOpen={isMobileSidebarOpen}
+        setIsMobileOpen={setIsMobileSidebarOpen}
+      />
 
-        {error && (
-          <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <p className="text-gray-600">Loading doctors...</p>
-        ) : doctors.length === 0 ? (
-          <p className="text-gray-600">No doctors found.</p>
+      {/* Main Content Area */}
+      <main className="pt-20 lg:pl-68 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {activeTab === 'billing' ? (
+          <PatientBillingView historyAppointments={historyAppointments} />
+        ) : activeTab === 'settings' ? (
+          <PatientSettingsView profile={patientProfile} patientName={patientName} />
         ) : (
-          <div className="grid gap-4">
-            {doctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                onClick={() => handleSelectDoctor(doctor.id)}
-                className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition"
-              >
-                <h2 className="text-lg font-semibold text-gray-900">{doctor.user.name}</h2>
-                <p className="text-gray-600">{doctor.specialization}</p>
-                <p className="text-sm text-gray-500">{doctor.qualification}</p>
-                <p className="text-sm text-gray-500">Department: {doctor.department.name}</p>
-              </div>
-            ))}
-          </div>
+          <PatientDashboardView
+            patientName={patientName}
+            doctors={doctors}
+            loadingDoctors={loading}
+            searchQuery={search}
+            historyAppointments={historyAppointments}
+            medicalRecords={medicalRecords}
+            onSearchChange={(q) => {
+              setSearch(q);
+              if (activeTab === 'doctors') {
+                fetchDoctors(q);
+              } else {
+                fetchDoctors(q);
+              }
+            }}
+            onSearchSubmit={handleSearchSubmit}
+            onSelectDoctor={handleSelectDoctor}
+          />
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -3,6 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiRequest } from '@/lib/api';
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  Activity,
+  FileText,
+  Plus,
+  Pill,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Stethoscope,
+  Droplet,
+  Loader2,
+  X,
+  Sparkles,
+} from 'lucide-react';
 
 export default function PatientHistoryPage() {
   const router = useRouter();
@@ -64,34 +81,46 @@ export default function PatientHistoryPage() {
     const minutes = String(d.getUTCMinutes()).padStart(2, '0');
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-    const date = d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' });
+    const date = d.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
     return `${date} at ${displayHour}:${minutes} ${period}`;
   };
 
   const statusStyle = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
-      case 'confirmed': return 'bg-blue-50 text-blue-700 ring-1 ring-blue-200';
-      case 'completed': return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
-      case 'cancelled': return 'bg-red-50 text-red-700 ring-1 ring-red-200';
-      default: return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200';
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/70';
+      case 'confirmed':
+        return 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/70';
+      case 'completed':
+        return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70';
+      case 'cancelled':
+        return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200/70';
+      default:
+        return 'bg-slate-50 text-slate-700 ring-1 ring-slate-200/70';
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto animate-pulse">
-        <div className="h-4 w-20 bg-gray-200 rounded mb-4" />
-        <div className="h-24 bg-gray-200 rounded-xl mb-6" />
-        <div className="h-40 bg-gray-200 rounded-xl" />
+      <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+        <div className="h-6 w-24 bg-slate-200 rounded-lg" />
+        <div className="h-32 bg-slate-200 rounded-3xl" />
+        <div className="h-48 bg-slate-200 rounded-3xl" />
+        <div className="h-48 bg-slate-200 rounded-3xl" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto bg-red-50 text-red-700 p-4 rounded-xl text-sm ring-1 ring-red-200">
-        {error}
+      <div className="max-w-4xl mx-auto bg-rose-50 border border-rose-100 text-rose-700 p-5 rounded-2xl text-sm flex items-center gap-3">
+        <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
+        <span>{error}</span>
       </div>
     );
   }
@@ -106,80 +135,124 @@ export default function PatientHistoryPage() {
     .toUpperCase();
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="text-sm text-gray-500 hover:text-gray-900 mb-5 inline-flex items-center gap-1.5 transition"
+        className="text-xs font-semibold text-slate-500 hover:text-blue-600 bg-white hover:bg-blue-50/60 border border-slate-200/80 px-3.5 py-2 rounded-xl inline-flex items-center gap-2 transition duration-150 shadow-2xs group cursor-pointer"
       >
-        <span>←</span> Back
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span>Back to Appointments</span>
       </button>
 
       {/* Patient Header Card */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-6 mb-8 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-lg font-semibold flex-shrink-0">
-          {initials}
+      <div className="bg-white rounded-3xl shadow-xs ring-1 ring-slate-100 border border-slate-100 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-teal-500 text-white font-extrabold text-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
+            {initials}
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              {history.patient.user.name}
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">{history.patient.user.email}</p>
+          </div>
         </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">{history.patient.user.name}</h1>
-          <p className="text-gray-500 text-sm">{history.patient.user.email}</p>
-        </div>
-        <div className="flex gap-2 text-xs">
-          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full ring-1 ring-gray-200">
-            {new Date(history.patient.dob).toLocaleDateString()}
+
+        {/* Info Pills */}
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200/70 font-medium">
+            <Calendar className="w-3.5 h-3.5 text-blue-600" />
+            <span>{new Date(history.patient.dob).toLocaleDateString()}</span>
           </span>
-          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full ring-1 ring-gray-200 capitalize">
-            {history.patient.gender}
+          <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200/70 capitalize font-medium">
+            <User className="w-3.5 h-3.5 text-teal-600" />
+            <span>{history.patient.gender}</span>
           </span>
           {history.patient.bloodGroup && (
-            <span className="bg-red-50 text-red-600 px-3 py-1.5 rounded-full ring-1 ring-red-200 font-medium">
-              {history.patient.bloodGroup}
+            <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 px-3 py-1.5 rounded-full border border-rose-200/70 font-semibold">
+              <Droplet className="w-3.5 h-3.5 text-rose-600" />
+              <span>{history.patient.bloodGroup}</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Appointments Section */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
-          Appointments ({history.appointments.length})
-        </h2>
+      {/* Appointments History Section */}
+      <section className="bg-white rounded-3xl shadow-xs ring-1 ring-slate-100 border border-slate-100 p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <span>Consultation History</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Past and scheduled visits ({history.appointments.length})
+            </p>
+          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
+            Records
+          </span>
+        </div>
 
         {history.appointments.length === 0 ? (
-          <p className="text-gray-400 text-sm bg-white rounded-xl p-6 text-center ring-1 ring-gray-100">
-            No appointments found.
-          </p>
+          <div className="py-10 text-center text-slate-400 text-xs bg-slate-50/60 rounded-2xl border border-slate-100">
+            No past appointment visits recorded for this patient.
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {history.appointments.map((appt: any) => (
-              <div key={appt.id} className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-5">
-                <div className="flex justify-between items-start mb-1.5">
-                  <p className="text-gray-900 font-medium">Dr. {appt.doctor.user.name}</p>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${statusStyle(appt.status)}`}>
+              <div
+                key={appt.id}
+                className="bg-slate-50/70 rounded-2xl p-5 border border-slate-100/80 hover:bg-white hover:shadow-xs transition duration-150"
+              >
+                <div className="flex justify-between items-start gap-3 mb-2">
+                  <p className="text-sm font-bold text-slate-900">Dr. {appt.doctor.user.name}</p>
+                  <span
+                    className={`text-[11px] px-2.5 py-1 rounded-full font-semibold capitalize ${statusStyle(
+                      appt.status
+                    )}`}
+                  >
                     {appt.status}
                   </span>
                 </div>
-                <p className="text-gray-500 text-sm">{formatDateTime(appt.scheduledAt)}</p>
+
+                <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{formatDateTime(appt.scheduledAt)}</span>
+                </div>
+
                 {appt.reason && (
-                  <p className="text-gray-500 text-sm mt-1.5">
-                    <span className="text-gray-400">Reason:</span> {appt.reason}
+                  <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic">
+                    <span className="font-semibold text-slate-700 not-italic">Reason: </span>
+                    {appt.reason}
                   </p>
                 )}
 
+                {/* Prescription Subsection */}
                 {appt.prescription && (
-                  <div className="mt-4 border-t border-gray-50 pt-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Prescription
-                    </p>
+                  <div className="mt-4 pt-4 border-t border-slate-200/60">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2">
+                      <Pill className="w-4 h-4 text-teal-600" />
+                      <span>Prescribed Medication</span>
+                    </div>
+
                     {appt.prescription.notes && (
-                      <p className="text-sm text-gray-500 mb-2">{appt.prescription.notes}</p>
+                      <p className="text-xs text-slate-500 mb-2.5 italic">
+                        &quot;{appt.prescription.notes}&quot;
+                      </p>
                     )}
+
                     <div className="flex flex-wrap gap-2">
                       {appt.prescription.items.map((item: any) => (
                         <span
                           key={item.id}
-                          className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full"
+                          className="text-xs bg-teal-50 text-teal-800 px-3 py-1.5 rounded-full border border-teal-200/60 font-medium inline-flex items-center gap-1.5"
                         >
-                          {item.medicine.name} · {item.dosage}
+                          <span className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
+                          <span>
+                            {item.medicine.name} &bull; {item.dosage}
+                          </span>
                         </span>
                       ))}
                     </div>
@@ -192,76 +265,127 @@ export default function PatientHistoryPage() {
       </section>
 
       {/* Medical Records Section */}
-      <section>
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-            Medical Records ({history.medicalRecords.length})
-          </h2>
+      <section className="bg-white rounded-3xl shadow-xs ring-1 ring-slate-100 border border-slate-100 p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-teal-600" />
+              <span>Medical Records</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Clinical diagnoses and notes ({history.medicalRecords.length})
+            </p>
+          </div>
+
           <button
             onClick={() => setShowForm(!showForm)}
-            className="text-xs font-medium bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+            className="text-xs font-semibold bg-gradient-to-r from-blue-600 to-teal-600 text-white px-4 py-2 rounded-xl shadow-xs hover:from-blue-700 hover:to-teal-700 transition duration-150 inline-flex items-center gap-1.5 cursor-pointer"
           >
-            {showForm ? 'Cancel' : '+ Add Record'}
+            {showForm ? (
+              <>
+                <X className="w-4 h-4" /> Cancel
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" /> Add Record
+              </>
+            )}
           </button>
         </div>
 
+        {/* Inline Add Record Form */}
         {showForm && (
-          <form onSubmit={handleAddRecord} className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-5 mb-4">
+          <form
+            onSubmit={handleAddRecord}
+            className="bg-blue-50/40 rounded-2xl border border-blue-100 p-5 mb-6 space-y-4 animate-in fade-in duration-150"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-900 mb-1">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <span>New Medical Entry</span>
+            </div>
+
             {formError && (
-              <div className="bg-red-50 text-red-700 p-2.5 rounded-lg mb-3 text-sm ring-1 ring-red-200">
-                {formError}
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{formError}</span>
               </div>
             )}
 
-            <div className="mb-3">
-              <label className="block text-xs font-medium mb-1.5 text-gray-500">Diagnosis</label>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Diagnosis
+              </label>
               <input
                 type="text"
                 value={diagnosis}
                 onChange={(e) => setDiagnosis(e.target.value)}
                 required
-                placeholder="e.g. Seasonal Flu"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-400 focus:outline-none transition"
+                placeholder="e.g. Acute Bronchitis, Seasonal Flu"
+                className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
               />
             </div>
 
-            <div className="mb-4">
-              <label className="block text-xs font-medium mb-1.5 text-gray-500">Symptoms (optional)</label>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Symptoms (Optional)
+              </label>
               <textarea
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
-                rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-400 focus:outline-none transition"
+                rows={3}
+                placeholder="Describe patient symptoms, vitals, or clinical notes..."
+                className="w-full px-4 py-2.5 text-sm text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium transition"
-            >
-              {formLoading ? 'Saving...' : 'Save Record'}
-            </button>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={formLoading}
+                className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-1.5 transition cursor-pointer"
+              >
+                {formLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  'Save Medical Record'
+                )}
+              </button>
+            </div>
           </form>
         )}
 
+        {/* Existing Medical Records Cards */}
         {history.medicalRecords.length === 0 ? (
-          <p className="text-gray-400 text-sm bg-white rounded-xl p-6 text-center ring-1 ring-gray-100">
-            No medical records found.
-          </p>
+          <div className="py-10 text-center text-slate-400 text-xs bg-slate-50/60 rounded-2xl border border-slate-100">
+            No medical records added yet for this patient.
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {history.medicalRecords.map((record: any) => (
-              <div key={record.id} className="bg-white rounded-xl shadow-sm ring-1 ring-gray-100 p-5">
-                <div className="flex justify-between items-start">
-                  <p className="text-gray-900 font-medium">{record.diagnosis}</p>
-                  <span className="text-xs text-gray-400">
+              <div
+                key={record.id}
+                className="bg-slate-50/70 rounded-2xl p-5 border border-slate-100/80 hover:bg-white hover:shadow-xs transition duration-150"
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">{record.diagnosis}</h3>
+                    {record.symptoms && (
+                      <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{record.symptoms}</p>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-200/60 flex-shrink-0">
                     {new Date(record.recordDate).toLocaleDateString()}
                   </span>
                 </div>
-                {record.symptoms && (
-                  <p className="text-gray-500 text-sm mt-1.5">{record.symptoms}</p>
-                )}
               </div>
             ))}
           </div>

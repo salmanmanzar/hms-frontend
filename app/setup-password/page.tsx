@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiRequest } from '@/lib/api';
 import { decodeToken, getDashboardPath } from '@/lib/jwt';
 
-export default function SetupPasswordPage() {
+function SetupPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -120,5 +120,13 @@ export default function SetupPasswordPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function SetupPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-100">Loading...</div>}>
+      <SetupPasswordForm />
+    </Suspense>
   );
 }
