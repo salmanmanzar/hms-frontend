@@ -16,6 +16,7 @@ import {
   Stethoscope,
   Loader2,
   ShieldAlert,
+  Building2,
 } from 'lucide-react';
 
 export default function DoctorLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [doctorName, setDoctorName] = useState('');
+  const [orgName, setOrgName] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -34,6 +36,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     fetchDoctorName();
+    fetchOrganization();
   }, []);
 
   useEffect(() => {
@@ -106,6 +109,17 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
     }
   };
 
+  const fetchOrganization = async () => {
+    try {
+      const org = await apiRequest('/auth/my-organization');
+      if (org) {
+        setOrgName(org.name);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -148,10 +162,13 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
               <Stethoscope className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-bold tracking-tight text-slate-900">HealthPulse</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold border border-blue-100">
-                  HMS
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold tracking-tight text-slate-900">HMS</span>
+                <span className="hidden sm:inline-block text-slate-300">|</span>
+                {/* Hospital / Organization Name */}
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100 max-w-[220px]">
+                  <Building2 className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{orgName || 'Loading...'}</span>
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium -mt-0.5">Doctor Portal</p>
@@ -250,7 +267,7 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
                 <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                   Dr. {doctorName || 'Doctor'}
                 </p>
-                <p className="text-[11px] text-slate-400 font-medium">Medical Practitioner</p>
+                <p className="text-[11px] text-slate-400 font-medium">{orgName || 'Medical Practitioner'}</p>
               </div>
               <ChevronDown
                 className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
@@ -264,7 +281,10 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl ring-1 ring-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-4 py-2.5 border-b border-slate-100">
                   <p className="text-sm font-bold text-slate-900">Dr. {doctorName || 'Doctor'}</p>
-                  <p className="text-xs text-slate-400">Practitioner Account</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Building2 className="w-3 h-3 text-blue-500 shrink-0" />
+                    <p className="text-xs text-slate-400 truncate">{orgName || 'Hospital'}</p>
+                  </div>
                 </div>
                 <div className="py-1">
                   <button
@@ -321,14 +341,18 @@ export default function DoctorLayout({ children }: { children: React.ReactNode }
             </nav>
           </div>
 
-          {/* Quick Help Footer Card */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 m-3 rounded-2xl">
-            <div className="flex items-center gap-2 mb-1.5 text-slate-700 font-semibold text-xs">
-              <ShieldAlert className="w-4 h-4 text-teal-600" /> Need Assistance?
+          {/* Sidebar Footer Info Card */}
+          <div className="p-4 border-t border-slate-100 m-3">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-blue-50/40 border border-slate-100 flex items-center gap-3">
+              <Building2 className="w-8 h-8 text-blue-600 bg-blue-50 p-1.5 rounded-lg border border-blue-100 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">{orgName || 'Hospital'}</p>
+                <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="truncate">Doctor Portal • Active</span>
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Contact Hospital IT Desk for patient record synchronization.
-            </p>
           </div>
         </aside>
 

@@ -167,6 +167,12 @@ export default function LoginForm() {
           Create Account
         </Link>
       </div>
+      <p className="text-center text-sm mt-2 text-gray-600">
+        Want to register your hospital?{' '}
+        <Link href="/register-hospital" className="text-blue-600 hover:underline">
+          Register here
+        </Link>
+      </p>
     </div>
   );
 }

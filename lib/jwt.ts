@@ -18,17 +18,12 @@ export function decodeToken(token: string): JwtPayload | null {
 
 export function getDashboardPath(role: string): string {
   switch (role) {
-    case 'patient':
-      return '/dashboard';
-    case 'doctor':
-      return '/dashboard/doctor';
-    case 'receptionist':
-      return '/dashboard/receptionist';
-    case 'pharmacist':
-      return '/dashboard/pharmacist';
-    case 'admin':
-      return '/dashboard/admin';
-    default:
-      return '/login';
+    case 'patient': return '/dashboard';
+    case 'doctor': return '/dashboard/doctor';
+    case 'receptionist': return '/dashboard/receptionist';
+    case 'pharmacist': return '/dashboard/pharmacist';
+    case 'admin': return '/dashboard/admin';
+    case 'super_admin': return '/dashboard/super-admin';
+    default: return '/login';
   }
 }

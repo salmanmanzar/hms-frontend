@@ -3,12 +3,27 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { decodeToken } from '@/lib/jwt';
+import { apiRequest } from '@/lib/api';
+import { 
+  UserPlus, 
+  CalendarPlus, 
+  ClipboardList, 
+  LogOut, 
+  ChevronDown, 
+  Menu, 
+  X, 
+  ShieldCheck, 
+  Activity, 
+  Building2 
+} from 'lucide-react';
 
 export default function ReceptionistLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [email, setEmail] = useState('');
+  const [orgName, setOrgName] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,7 +32,19 @@ export default function ReceptionistLayout({ children }: { children: React.React
       const decoded = decodeToken(token);
       if (decoded) setEmail(decoded.email);
     }
+    fetchOrganization();
   }, []);
+
+  const fetchOrganization = async () => {
+    try {
+      const org = await apiRequest('/auth/my-organization');
+      if (org) {
+        setOrgName(org.name);
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -36,80 +63,141 @@ export default function ReceptionistLayout({ children }: { children: React.React
   };
 
   const navItems = [
-    { icon: '⚕️', label: 'Register Patient', path: '/dashboard/receptionist' },
-    { icon: '📅', label: 'Book Appointment', path: '/dashboard/receptionist/book' },
-    { icon: '📋', label: 'All Appointments', path: '/dashboard/receptionist/appointments' },
+    { icon: UserPlus, label: 'Register Patient', path: '/dashboard/receptionist' },
+    { icon: CalendarPlus, label: 'Book Appointment', path: '/dashboard/receptionist/book' },
+    { icon: ClipboardList, label: 'All Appointments', path: '/dashboard/receptionist/appointments' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-30">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-            H
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      {/* Top Navbar */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 lg:px-6 z-30 print:hidden shadow-xs">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
+              H
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-extrabold text-slate-900 tracking-tight">HMS</span>
+              <span className="hidden sm:inline-block text-slate-300">|</span>
+              {/* Hospital / Organization Name */}
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200/60 max-w-[200px]">
+                <Building2 className="w-3 h-3 shrink-0" />
+                <span className="truncate">{orgName || 'Loading...'}</span>
+              </span>
+            </div>
           </div>
-          <span className="text-lg font-bold text-gray-900">HMS</span>
-          <span className="text-gray-300 mx-2">|</span>
-          <span className="text-sm text-gray-500">Reception Desk</span>
         </div>
 
+        {/* User Profile Dropdown */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-2 py-1.5 transition"
+            className="flex items-center gap-2.5 p-1.5 pr-3 hover:bg-slate-100/80 rounded-xl transition border border-transparent hover:border-slate-200/60"
           >
-            <span className="text-sm text-gray-700">{email || '...'}</span>
-            <div className="w-9 h-9 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-semibold">
+            <div className="w-9 h-9 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-purple-500/20 shadow-xs">
               RC
             </div>
-            <span className="text-gray-400 text-xs">{menuOpen ? '▲' : '▼'}</span>
+            <div className="hidden md:flex flex-col text-left">
+              <span className="text-xs font-semibold text-slate-900 max-w-[150px] truncate">{email || 'Receptionist'}</span>
+              <span className="text-[10px] text-slate-500 font-medium">Front Desk Staff</span>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg ring-1 ring-gray-100 py-1.5 z-40">
-              <div className="px-4 py-2 border-b border-gray-50">
-                <p className="text-sm font-medium text-gray-900">{email}</p>
-                <p className="text-xs text-gray-400">Receptionist Account</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl ring-1 ring-slate-200/80 py-2 z-40 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-4 py-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <p className="text-xs font-semibold text-emerald-700">Authenticated Session</p>
+                </div>
+                <p className="text-xs font-medium text-slate-900 truncate">{email}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Building2 className="w-3 h-3 text-blue-500 shrink-0" />
+                  <p className="text-[10px] text-slate-500 truncate">{orgName || 'Hospital'}</p>
+                </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition"
-              >
-                <span>🚪</span> Logout
-              </button>
+
+              <div className="px-1.5 py-1.5">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl flex items-center gap-2 transition"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </div>
             </div>
           )}
         </div>
       </header>
 
-      <div className="flex pt-16">
-        <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 flex flex-col">
-          <nav className="flex-1 p-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-3 mb-2">
-              Menu
-            </p>
+      <div className="flex pt-16 min-h-[calc(100vh-4rem)]">
+        {/* Mobile Backdrop */}
+        {mobileSidebarOpen && (
+          <div
+            onClick={() => setMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-20 lg:hidden"
+          />
+        )}
+
+        {/* Left Sidebar */}
+        <aside className={`fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-slate-200/80 flex flex-col justify-between z-20 transition-transform duration-300 ease-in-out print:hidden ${
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
+          <nav className="p-4 space-y-1.5">
+            <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Front Desk Menu
+            </div>
             {navItems.map((item) => {
               const isActive = pathname === item.path;
+              const Icon = item.icon;
               return (
                 <button
                   key={item.path}
-                  onClick={() => router.push(item.path)}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg mb-1 text-sm flex items-center gap-3 transition ${
+                  onClick={() => {
+                    router.push(item.path);
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-all ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 shadow-xs font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
           </nav>
+
+          {/* Sidebar Footer Info Card */}
+          <div className="p-4">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-teal-50/40 border border-slate-100 flex items-center gap-3">
+              <Building2 className="w-8 h-8 text-teal-600 bg-teal-50 p-1.5 rounded-lg border border-teal-100 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">{orgName || 'Hospital'}</p>
+                <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span className="truncate">Reception Desk • Active</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </aside>
 
-        <main className="flex-1 ml-64 p-6">{children}</main>
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">{children}</main>
       </div>
     </div>
   );
-}
+}
