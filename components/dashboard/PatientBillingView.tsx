@@ -78,18 +78,25 @@ export default function PatientBillingView({ historyAppointments }: PatientBilli
     .filter((inv) => inv.paymentStatus === 'paid')
     .reduce((sum, inv) => sum + inv.amount, 0);
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-US', {
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      timeZone: 'UTC',
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
+  };
 
-  const formatTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const hours = d.getUTCHours();
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+    return `${displayHour}:${minutes} ${period}`;
+  };
 
   return (
     <div className="space-y-6 animate-slide-up pb-12">

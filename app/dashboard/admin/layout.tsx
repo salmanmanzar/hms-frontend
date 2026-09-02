@@ -121,7 +121,7 @@ export default function AdminLayout({
       icon: Building2,
       label: 'Departments',
       path: '/dashboard/admin/departments',
-      enabled: false,
+      enabled: true,
     },
     {
       icon: BarChart3,
