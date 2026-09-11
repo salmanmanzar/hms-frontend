@@ -60,6 +60,12 @@ export default function Navbar() {
               Features
             </a>
             <a
+              href="#pricing"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:outline-none"
+            >
+              Pricing
+            </a>
+            <a
               href="#stats"
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:outline-none"
             >
@@ -142,6 +148,13 @@ export default function Navbar() {
               className="px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400"
             >
               Features
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Pricing
             </a>
             <a
               href="#stats"

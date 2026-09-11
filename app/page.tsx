@@ -2,6 +2,7 @@ import Navbar from '@/components/landing/Navbar';
 import HeroSection from '@/components/landing/HeroSection';
 import AudienceSection from '@/components/landing/AudienceSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
+import PricingSection from '@/components/landing/PricingSection';
 import StatsSection from '@/components/landing/StatsSection';
 import CtaSection from '@/components/landing/CtaSection';
 import Footer from '@/components/landing/Footer';
@@ -20,6 +21,7 @@ export default function Home() {
         <HeroSection />
         <AudienceSection />
         <FeaturesSection />
+        <PricingSection />
         <StatsSection />
         <CtaSection />
       </main>

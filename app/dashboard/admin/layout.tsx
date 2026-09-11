@@ -29,6 +29,7 @@ export default function AdminLayout({
 
   const [adminEmail, setAdminEmail] = useState('');
   const [orgName, setOrgName] = useState('');
+  const [orgPlan, setOrgPlan] = useState('basic');
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -65,6 +66,7 @@ export default function AdminLayout({
 
       if (org) {
         setOrgName(org.name);
+        setOrgPlan(org.subscriptionPlan || 'basic');
       }
     } catch (error) {
       console.error('Failed to fetch organization:', error);
@@ -178,17 +180,17 @@ export default function AdminLayout({
                   |
                 </span>
 
-                {/* Organization Name */}
+                {/* Organization Name & Subscription Plan */}
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100 max-w-[250px]">
-
                   <Building2 className="w-3 h-3 shrink-0" />
-
                   <span className="truncate">
                     {orgName || 'Loading...'}
                   </span>
-
                 </span>
 
+                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-200">
+                  {orgPlan} Plan
+                </span>
               </div>
 
               <p className="text-[11px] text-slate-400 font-medium -mt-0.5 hidden sm:block">
